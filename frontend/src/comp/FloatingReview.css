@@ -1,0 +1,59 @@
+.marquee {
+  display: inline-block;
+  white-space: nowrap;
+  animation: marquee 25s linear infinite;
+}
+
+.marquee-reverse {
+  display: inline-block;
+  white-space: nowrap;
+  animation: marqueeReverse 25s linear infinite;
+}
+
+/* Mobile version */
+@media (max-width: 1024px) {
+  .marquee {
+    animation: marqueeMobile 25s linear infinite;
+  }
+  .marquee-reverse {
+    animation: marqueeReverseMobile 25s linear infinite;
+  }
+}
+
+/* Desktop animations */
+@keyframes marquee {
+  0% {
+    transform: translateX(-160%);
+  }
+  100% {
+    transform: translateX(0%);
+  }
+}
+
+@keyframes marqueeReverse {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-160%);
+  }
+}
+
+/* Mobile animations */
+@keyframes marqueeMobile {
+  0% {
+    transform: translateX(-800%);
+  }
+  100% {
+    transform: translateX(0%);
+  }
+}
+
+@keyframes marqueeReverseMobile {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-800%);
+  }
+}

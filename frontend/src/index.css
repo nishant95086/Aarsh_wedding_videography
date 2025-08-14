@@ -1,0 +1,18 @@
+@font-face{
+    font-family: EmilysCandy;
+    src : url("../Emilys_Candy/EmilysCandy-Regular.ttf");
+}
+
+@font-face{
+    font-family: Sedan;
+    src : url("../Sedan/Sedan-Regular.ttf");
+}
+@import "tailwindcss";
+
+@theme{
+    --font-EmilysCandy : EmilysCandy, "sans-serif"
+}
+
+@theme{
+    --font-Sedan : Sedan, "sans-serif"
+}
