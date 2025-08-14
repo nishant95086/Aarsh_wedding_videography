@@ -1,7 +1,7 @@
 // API Configuration
 export const API_CONFIG = {
   // import.meta.env.VITE_API_BASE_URL || 
-  BASE_URL: ('http://localhost:5000/api').replace(/\/$/, ''), // remove trailing slash
+  BASE_URL:import.meta.env.VITE_BACKEND_URL, // remove trailing slash
   TIMEOUT: 10000,
   RETRY_ATTEMPTS: 3,
 };
