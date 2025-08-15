@@ -1,13 +1,23 @@
-import React, { useState, useMemo, useCallback, useRef, useEffect } from "react";
+import React, {
+  useState,
+  useMemo,
+  useCallback,
+  useRef,
+  useEffect,
+  lazy,
+  Suspense
+} from "react";
 import Button from "../comp/Button";
 import { Image, Video, Play } from "lucide-react";
-import ImageModal from "../comp/ImageModal";
-import VideoModal from "../comp/VideoModal";
 import Footer from "../comp/footer";
 import { useNavigate } from "react-router-dom";
 import ScrollProgress from "../../components/motion-primitives/scroll-progress";
-import { mediaAPI } from "../api"; // Removed ERROR_MESSAGES for safety
+import { mediaAPI } from "../api";
 import { FaBriefcase } from "react-icons/fa";
+
+// Lazy load modals so they don’t block initial render
+const ImageModal = lazy(() => import("../comp/ImageModal"));
+const VideoModal = lazy(() => import("../comp/VideoModal"));
 
 export default function Gallery() {
   const [photos, setPhotos] = useState([]);
@@ -27,8 +37,11 @@ export default function Gallery() {
         const res = await mediaAPI.getAll();
         const items = Array.isArray(res) ? res : res?.data || [];
 
-        setPhotos(items.filter((item) => item.type === "photo"));
-        setVideos(items.filter((item) => item.type === "video"));
+        // Remove duplicates based on _id
+        const uniqueItems = Array.from(new Map(items.map(i => [i._id, i])).values());
+
+        setPhotos(uniqueItems.filter((item) => item.type === "photo"));
+        setVideos(uniqueItems.filter((item) => item.type === "video"));
         setError(null);
       } catch (err) {
         console.error("Error fetching media:", err);
@@ -58,7 +71,7 @@ export default function Gallery() {
           video.thumbnailUrl ||
           (youtubeId
             ? `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`
-            : video.imageUrl || "/default-video-thumbnail.svg"), // fallback for Cloudinary video
+            : video.imageUrl || "/default-video-thumbnail.svg"),
       };
     });
   }, [videos, getYoutubeId]);
@@ -66,7 +79,11 @@ export default function Gallery() {
   const photoThumbnails = useMemo(() => {
     return photos.map((photo) => ({
       ...photo,
-      thumbnailUrl: photo.thumbnailUrl || photo.imageUrl || "/default-image.svg",
+      thumbnailUrl:
+        photo.thumbnailUrl ||
+        (photo.imageUrl
+          ? `${photo.imageUrl}?w=600&h=600&fit=crop&fm=webp`
+          : "/default-image.svg"),
     }));
   }, [photos]);
 
@@ -109,6 +126,8 @@ export default function Gallery() {
           containerRef={containerRef}
           className="fixed top-0 left-0 right-0 h-1 bg-gradient-to-r from-pink-500 to-purple-500 z-50"
         />
+
+        {/* Title */}
         <div className="flex flex-col items-center">
           <h1 className="text-4xl sm:text-6xl mt-40 font-EmilysCandy font-bold bg-gradient-to-l from-pink-500 to-purple-500 bg-clip-text text-transparent p-4">
             Our Gallery
@@ -118,6 +137,7 @@ export default function Gallery() {
           </p>
         </div>
 
+        {/* Buttons */}
         <div className="flex justify-center gap-5 mt-5">
           <Button onClick={() => setViewType("photos")} icon={Image} active={viewType === "photos"}>
             Photos ({photos.length})
@@ -127,6 +147,7 @@ export default function Gallery() {
           </Button>
         </div>
 
+        {/* Grid */}
         <div className="flex flex-wrap w-full gap-4 p-5">
           {viewType === "photos" ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4 w-full">
@@ -143,7 +164,7 @@ export default function Gallery() {
                     loading="lazy"
                     onError={(e) => (e.target.src = "/default-image.svg")}
                   />
-                  <div className="absolute inset-0 flex items-center justify-center bg-opacity-0  group-hover:bg-opacity-20 transition-all duration-300">
+                  <div className="absolute inset-0 flex items-center justify-center bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-300">
                     <div className="opacity-0 group-hover:opacity-100 bg-white bg-opacity-90 rounded-full p-2">
                       <Image className="w-6 h-6 text-gray-700" />
                     </div>
@@ -177,6 +198,7 @@ export default function Gallery() {
           )}
         </div>
 
+        {/* Empty states */}
         {viewType === "photos" && photos.length === 0 && (
           <div className="text-center py-12">
             <Image className="w-16 h-16 text-gray-400 mx-auto mb-4" />
@@ -190,6 +212,7 @@ export default function Gallery() {
           </div>
         )}
 
+        {/* Footer */}
         <Footer
           qus="Looking for Professional Services?"
           dic="Explore our wide range of offerings designed to meet your needs."
@@ -199,8 +222,11 @@ export default function Gallery() {
         />
       </div>
 
-      {selectedImage && <ImageModal imageUrl={selectedImage} onClose={handleCloseImageModal} />}
-      {selectedVideo && <VideoModal videoUrl={selectedVideo} onClose={handleCloseVideoModal} />}
+      {/* Modals */}
+      <Suspense fallback={null}>
+        {selectedImage && <ImageModal imageUrl={selectedImage} onClose={handleCloseImageModal} />}
+        {selectedVideo && <VideoModal videoUrl={selectedVideo} onClose={handleCloseVideoModal} />}
+      </Suspense>
     </>
   );
 }
