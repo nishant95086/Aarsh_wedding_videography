@@ -7,7 +7,7 @@ const normalizeBaseUrl = (url) => {
 };
 
 export const API_CONFIG = {
-  BASE_URL: normalizeBaseUrl(import.meta.env.VITE_BACKEND || 'http://localhost:5000/api'), // auto remove trailing slash
+  BASE_URL: normalizeBaseUrl(import.meta.env.VITE_BACKEND_URL || ''), // auto remove trailing slash
   TIMEOUT: 10000,     // request timeout (ms)
   RETRY_ATTEMPTS: 3,  // number of retry attempts on failure
 };
