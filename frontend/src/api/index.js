@@ -1,4 +1,6 @@
-// Main API index file - exports all API modules and utilities
+// =============================
+// Main API Index File
+// =============================
 
 // Import API modules
 import { authAPI } from './auth.js';
@@ -10,7 +12,10 @@ import { apiRequest, uploadFile, validateResponse } from './utils.js';
 // Import config constants
 import { API_CONFIG, getHeaders, ERROR_MESSAGES } from './config.js';
 
-// Named exports (recommended for tree-shaking & clarity)
+// =============================
+// Named Exports (recommended)
+// =============================
+
 export {
   authAPI,
   mediaAPI,
@@ -19,21 +24,34 @@ export {
   validateResponse,
   API_CONFIG,
   getHeaders,
-  ERROR_MESSAGES
+  ERROR_MESSAGES,
 };
 
-// Default export with all APIs grouped
+// =============================
+// Default Export (Convenience)
+// =============================
+
+/**
+ * Centralized API object for convenience imports.
+ * Example:
+ *   import API from './api';
+ *   API.auth.login(...);
+ *   API.media.getAll();
+ */
 export default {
   auth: authAPI,
   media: mediaAPI,
+
   utils: {
     apiRequest,
     uploadFile,
-    validateResponse
+    validateResponse,
   },
+
   config: {
     API_CONFIG,
     getHeaders,
-    ERROR_MESSAGES
-  }
+  },
+
+  errors: ERROR_MESSAGES,
 };

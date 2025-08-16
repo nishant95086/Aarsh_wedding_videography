@@ -1,21 +1,44 @@
 import { API_CONFIG, getHeaders, ERROR_MESSAGES } from './config.js';
 
 /**
- * Generic API request function with retry logic
+ * Generic API request function with retry + timeout support
  */
 export const apiRequest = async (endpoint, options = {}) => {
-  const { retryAttempts = API_CONFIG.RETRY_ATTEMPTS } = options;
+  const {
+    retryAttempts = API_CONFIG.RETRY_ATTEMPTS,
+    timeout = API_CONFIG.TIMEOUT,
+    token = null,
+    headers = {},
+    ...rest
+  } = options;
 
   for (let attempt = 1; attempt <= retryAttempts; attempt++) {
     try {
+      // Timeout controller
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeout);
+
       const response = await fetch(`${API_CONFIG.BASE_URL}${endpoint}`, {
-        headers: getHeaders(options.token),
-        ...options,
+        ...rest,
+        headers: {
+          ...getHeaders(token, rest.body instanceof FormData),
+          ...headers, // merge user headers
+        },
+        signal: controller.signal,
       });
 
+      clearTimeout(timeoutId);
+
+      // Handle errors
       if (!response.ok) {
         let errorMessage = `HTTP error! status: ${response.status}`;
-        const errorData = await response.json().catch(() => ({}));
+        let errorData = {};
+
+        try {
+          errorData = await response.json();
+        } catch {
+          errorData = {};
+        }
 
         switch (response.status) {
           case 401:
@@ -37,7 +60,7 @@ export const apiRequest = async (endpoint, options = {}) => {
             errorMessage = errorData.message || errorMessage;
         }
 
-        throw new Error(errorMessage);
+        throw { status: response.status, message: errorMessage, data: errorData };
       }
 
       return await response.json();
@@ -57,21 +80,20 @@ export const apiRequest = async (endpoint, options = {}) => {
 
 /**
  * Handle file uploads (with optional progress tracking)
- * For Cloudinary photo uploads: field name MUST match backend multer config
  */
 export const uploadFile = async (
   endpoint,
   file,
   token,
-  additionalFields = {},
-  onProgress = null
+  {
+    fieldName = 'file', // default but configurable
+    additionalFields = {},
+    onProgress = null,
+  } = {}
 ) => {
   const formData = new FormData();
-  
-  // This must match backend multer field name (usually 'file')
-  formData.append('image', file);
+  formData.append(fieldName, file);
 
-  // Append any extra fields like title, description, etc.
   Object.entries(additionalFields).forEach(([key, value]) => {
     formData.append(key, value);
   });
@@ -115,7 +137,7 @@ export const uploadFile = async (
 };
 
 /**
- * Validate API response
+ * Validate API response (checks required fields exist)
  */
 export const validateResponse = (response, requiredFields = []) => {
   if (!response || typeof response !== 'object') {

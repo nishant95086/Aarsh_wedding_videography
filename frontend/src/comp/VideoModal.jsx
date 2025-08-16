@@ -7,34 +7,47 @@ export default function VideoModal({ onClose, videoUrl }) {
   const modalRef = useRef(null);
   const closeButtonRef = useRef(null);
 
-  // Improved YouTube URL processing
+  // Process YouTube & other video URLs
   const embedUrl = useMemo(() => {
     if (!videoUrl) return "";
-    
-    // Handle different YouTube URL formats
+
     let videoId = "";
-    
-    if (videoUrl.includes("youtube.com/watch?v=")) {
-      videoId = videoUrl.split("v=")[1]?.split("&")[0];
-    } else if (videoUrl.includes("youtu.be/")) {
-      videoId = videoUrl.split("youtu.be/")[1]?.split("?")[0];
-    } else if (videoUrl.includes("youtube.com/embed/")) {
-      videoId = videoUrl.split("embed/")[1]?.split("?")[0];
-    }
-    
-    if (videoId) {
+    const ytRegex =
+      /(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([^&?/]+)/;
+
+    const match = videoUrl.match(ytRegex);
+    if (match && match[1]) {
+      videoId = match[1];
       return `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1`;
     }
-    
-    // If it's not a YouTube URL, return as is (for direct video files)
-    return videoUrl;
+
+    return videoUrl; // fallback for direct file URLs
   }, [videoUrl]);
 
-  const handleKeyDown = useCallback((e) => {
-    if (e.key === 'Escape') {
-      onClose();
-    }
-  }, [onClose]);
+  const handleKeyDown = useCallback(
+    (e) => {
+      if (e.key === "Escape") {
+        onClose();
+      }
+      if (e.key === "Tab") {
+        // trap focus inside modal
+        const focusableEls = modalRef.current.querySelectorAll(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        );
+        const firstEl = focusableEls[0];
+        const lastEl = focusableEls[focusableEls.length - 1];
+
+        if (e.shiftKey && document.activeElement === firstEl) {
+          e.preventDefault();
+          lastEl.focus();
+        } else if (!e.shiftKey && document.activeElement === lastEl) {
+          e.preventDefault();
+          firstEl.focus();
+        }
+      }
+    },
+    [onClose]
+  );
 
   const handleVideoLoad = useCallback(() => {
     setVideoLoading(false);
@@ -47,21 +60,19 @@ export default function VideoModal({ onClose, videoUrl }) {
   }, []);
 
   useEffect(() => {
-    document.body.style.overflow = 'hidden';
-    document.addEventListener('keydown', handleKeyDown);
-    
-    // Focus trap: focus the close button when modal opens
+    document.body.style.overflow = "hidden";
+    document.addEventListener("keydown", handleKeyDown);
+
     if (closeButtonRef.current) {
       closeButtonRef.current.focus();
     }
 
     return () => {
-      document.body.style.overflow = '';
-      document.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = "";
+      document.removeEventListener("keydown", handleKeyDown);
     };
   }, [handleKeyDown]);
 
-  // Reset loading state when videoUrl changes
   useEffect(() => {
     setVideoLoading(true);
     setVideoError(false);
@@ -72,37 +83,42 @@ export default function VideoModal({ onClose, videoUrl }) {
   return (
     <div
       ref={modalRef}
-      className="fixed inset-0 z-50 backdrop-blur-md bg-black/70 flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 backdrop-blur-md bg-black/80 flex items-center justify-center p-4"
       onClick={onClose}
       role="dialog"
       aria-modal="true"
       aria-labelledby="video-modal-title"
     >
       <div
-        className="relative w-full max-w-5xl aspect-video bg-black"
+        className="relative w-full max-w-5xl aspect-video bg-black rounded-lg shadow-lg overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Close button */}
         <button
           ref={closeButtonRef}
           onClick={onClose}
-          className="absolute -top-10 right-0 bg-white rounded-full p-2 shadow hover:bg-gray-100 transition z-10 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2"
+          className="absolute top-1 right-1 bg-white rounded-full p-1 shadow hover:bg-gray-100 transition z-10 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2"
           aria-label="Close video modal"
         >
           <X className="w-6 h-6 text-gray-700 cursor-pointer" />
         </button>
 
-        {videoLoading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-gray-900">
+        {/* Loading spinner */}
+        {videoLoading && !videoError && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/70 transition-opacity">
             <Loader2 className="w-8 h-8 text-white animate-spin" />
           </div>
         )}
 
+        {/* Error state */}
         {videoError ? (
           <div className="flex items-center justify-center h-full bg-gray-900">
             <div className="text-center text-white">
-              <AlertCircle className="w-12 h-12 mx-auto mb-2" />
+              <AlertCircle className="w-12 h-12 mx-auto mb-2 text-red-400" />
               <p id="video-modal-title">Failed to load video</p>
-              <p className="text-sm text-gray-400 mt-1">Please check the video URL</p>
+              <p className="text-sm text-gray-400 mt-1">
+                Please check the video URL or try again later.
+              </p>
             </div>
           </div>
         ) : (
@@ -111,9 +127,9 @@ export default function VideoModal({ onClose, videoUrl }) {
               <iframe
                 src={embedUrl}
                 title="Video player"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                 allowFullScreen
-                className="w-full h-full rounded-lg"
+                className="w-full h-full"
                 loading="eager"
                 onLoad={handleVideoLoad}
                 onError={handleVideoError}
@@ -123,9 +139,11 @@ export default function VideoModal({ onClose, videoUrl }) {
                 src={embedUrl}
                 controls
                 autoPlay
-                className="w-full h-full rounded-lg"
+                playsInline
+                muted
+                className="w-full h-full"
                 onLoadStart={() => setVideoLoading(true)}
-                onCanPlay={() => setVideoLoading(false)}
+                onCanPlay={handleVideoLoad}
                 onError={handleVideoError}
               >
                 Your browser does not support the video tag.

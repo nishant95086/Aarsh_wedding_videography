@@ -11,6 +11,8 @@ const AdminMedia = () => {
   const [showUploadForm, setShowUploadForm] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
+
   const [uploadForm, setUploadForm] = useState({
     type: 'photo',
     title: '',
@@ -31,6 +33,7 @@ const AdminMedia = () => {
       setMedia(data || []);
     } catch (error) {
       console.error('Error fetching media:', error);
+      setError('Failed to load media. Please refresh.');
     } finally {
       setLoading(false);
     }
@@ -68,11 +71,14 @@ const AdminMedia = () => {
           embedUrl = `https://www.youtube.com/embed/${ytMatch[1]}`;
         }
 
-        await mediaAPI.addVideo({
-          title: uploadForm.title,
-          description: uploadForm.description,
-          videoUrl: embedUrl
-        }, token);
+        await mediaAPI.addVideo(
+          {
+            title: uploadForm.title,
+            description: uploadForm.description,
+            videoUrl: embedUrl
+          },
+          token
+        );
       }
 
       resetForm();
@@ -90,11 +96,14 @@ const AdminMedia = () => {
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this media?')) {
       try {
+        setDeletingId(id);
         await mediaAPI.deleteMedia(id, localStorage.getItem('adminToken'));
         fetchMedia();
       } catch (error) {
         console.error('Delete error:', error);
         setError('Failed to delete media.');
+      } finally {
+        setDeletingId(null);
       }
     }
   };
@@ -114,6 +123,16 @@ const AdminMedia = () => {
       </div>
     );
   }
+
+  // Cloudinary optimization helper
+  const getOptimizedImageUrl = (url) => {
+    if (!url) return url;
+    // Insert transformation just after "upload/"
+    return url.replace(
+      '/upload/',
+      '/upload/f_auto,q_auto,w_600,dpr_auto/' // auto-format, auto-quality, width 600px, device pixel ratio
+    );
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-purple-50">
@@ -255,8 +274,9 @@ const AdminMedia = () => {
               <div className="aspect-video bg-gray-100 flex items-center justify-center">
                 {item.type === 'photo' ? (
                   <img
-                    src={item.imageUrl} // Cloudinary URL
+                    src={getOptimizedImageUrl(item.imageUrl)} // Optimized Cloudinary URL
                     alt={item.title}
+                    loading="lazy"
                     className="w-full h-full object-cover"
                   />
                 ) : (
@@ -265,6 +285,7 @@ const AdminMedia = () => {
                     className="w-full h-full"
                     frameBorder="0"
                     allowFullScreen
+                    loading="lazy"
                   ></iframe>
                 )}
               </div>
@@ -275,7 +296,10 @@ const AdminMedia = () => {
                   <span className="text-xs text-gray-500 capitalize">{item.type}</span>
                   <button
                     onClick={() => handleDelete(item._id)}
-                    className="text-red-500 hover:text-red-700"
+                    disabled={deletingId === item._id}
+                    className={`text-red-500 hover:text-red-700 ${
+                      deletingId === item._id ? 'opacity-50 cursor-not-allowed' : ''
+                    }`}
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>

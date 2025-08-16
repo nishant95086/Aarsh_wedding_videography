@@ -2,16 +2,53 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const helmet = require('helmet');
+const morgan = require('morgan');
+const compression = require('compression');
+const mongoSanitize = require('express-mongo-sanitize');
+const xss = require('xss-clean');
+const rateLimit = require('express-rate-limit');
 require('dotenv').config();
 
 const app = express();
 
 // =======================
-// Middleware
+// Security & Utility Middleware
 // =======================
-app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(helmet()); // secure headers
+app.use(mongoSanitize()); // prevent NoSQL injection
+app.use(xss()); // prevent XSS attacks
+app.use(compression()); // gzip compression
+
+// Rate limiter (100 requests per 15 min per IP)
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  message: {
+    success: false,
+    message: 'Too many requests from this IP, please try again later.'
+  }
+});
+app.use('/api', limiter);
+
+// Logging (only in dev)
+if (process.env.NODE_ENV === 'development') {
+  app.use(morgan('dev'));
+}
+
+// =======================
+// CORS (restrict in prod)
+// =======================
+app.use(cors({
+  origin: process.env.CLIENT_URL || '*',
+  credentials: true
+}));
+
+// =======================
+// Body Parsers
+// =======================
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // =======================
 // MongoDB Connection with Retry
@@ -19,38 +56,35 @@ app.use(express.urlencoded({ extended: true }));
 const connectDB = async () => {
   try {
     const conn = await mongoose.connect(process.env.MONGODB_URI, {
-      serverSelectionTimeoutMS: 5000, // Timeout after 5s instead of 30s
-      socketTimeoutMS: 45000, // Close sockets after 45s of inactivity
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
     });
     console.log('✅ Connected to MongoDB');
     return conn;
   } catch (error) {
     console.error('❌ MongoDB connection error:', error.message);
 
-    // Helpful message for IP whitelist error
     if (error.message.includes('whitelist')) {
       console.log('\n🔧 To fix this issue:');
       console.log('1. Go to MongoDB Atlas dashboard');
       console.log('2. Navigate to Network Access');
       console.log('3. Add your current IP address to the whitelist');
       console.log('4. Or use 0.0.0.0/0 to allow all IPs (not recommended for production)');
-      console.log('\nAlternatively:');
-      console.log('1. Install MongoDB locally');
-      console.log('2. Uncomment the local MongoDB URI in .env');
     }
 
-    // Retry after 5 seconds
     console.log('🔄 Retrying connection in 5 seconds...');
     setTimeout(connectDB, 5000);
   }
 };
-
-// Connect to DB
 connectDB();
 
 // =======================
 // Routes
 // =======================
+app.get('/health', (req, res) => {
+  res.json({ success: true, message: 'Server is healthy' });
+});
+
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/media', require('./routes/media'));
@@ -81,7 +115,19 @@ app.use('*', (req, res) => {
 // Start Server
 // =======================
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📱 API available at http://localhost:${PORT}/api`);
+});
+
+// =======================
+// Graceful Shutdown
+// =======================
+process.on('SIGINT', async () => {
+  console.log('🔌 Gracefully shutting down...');
+  await mongoose.connection.close();
+  server.close(() => {
+    console.log('✅ Server closed');
+    process.exit(0);
+  });
 });

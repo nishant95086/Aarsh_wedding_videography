@@ -62,8 +62,8 @@ const ContactForm = () => {
   };
 
   return (
-    <div className="w-xl mx-auto bg-white shadow-2xl rounded-2xl p-10 transition-transform duration-300 hover:scale-105">
-      <h2 className="text-2xl font-bold text-transparent bg-gradient-to-tl font-EmilysCandy from-pink-500 to-purple-500 bg-clip-text mb-4">
+    <div className="w-xl text-[15px] md:text-2xl mx-auto bg-white shadow-2xl rounded-2xl p-10 transition-transform duration-300 hover:scale-105">
+      <h2 className=" font-bold text-transparent bg-gradient-to-tl font-EmilysCandy from-pink-500 to-purple-500 bg-clip-text mb-4">
         Contact Us for Your Event
       </h2>
       <form onSubmit={handleSubmit} className="space-y-4">

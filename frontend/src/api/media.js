@@ -2,65 +2,82 @@ import { apiRequest } from './utils.js';
 import { API_CONFIG } from './config.js';
 
 export const mediaAPI = {
-  // Get all media (photos and videos)
+  // 🔹 Get all media
   getAll: async () => {
-    const response = await apiRequest('/media');
-    return response.data || response;
+    try {
+      const response = await apiRequest('/media');
+      return response.data || response;
+    } catch (error) {
+      console.error("Error fetching media:", error);
+      throw error;
+    }
   },
 
-  // Get only photos
+  // 🔹 Get only photos
   getPhotos: async () => {
-    const response = await apiRequest('/media?type=photo');
-    const data = response.data || response;
-    return data.filter(item => item.type === 'photo');
+    try {
+      const response = await apiRequest('/media?type=photo');
+      return response.data || response;
+    } catch (error) {
+      console.error("Error fetching photos:", error);
+      throw error;
+    }
   },
 
-  // Get only videos
+  // 🔹 Get only videos
   getVideos: async () => {
-    const response = await apiRequest('/media?type=video');
-    const data = response.data || response;
-    return data.filter(item => item.type === 'video');
+    try {
+      const response = await apiRequest('/media?type=video');
+      return response.data || response;
+    } catch (error) {
+      console.error("Error fetching videos:", error);
+      throw error;
+    }
   },
 
-  // Get media by category
+  // 🔹 Get media by category
   getByCategory: async (category) => {
-    const response = await apiRequest(`/media?category=${category}`);
-    return response.data || response;
+    try {
+      const response = await apiRequest(`/media?category=${encodeURIComponent(category)}`);
+      return response.data || response;
+    } catch (error) {
+      console.error("Error fetching category media:", error);
+      throw error;
+    }
   },
 
-  // Upload photo (admin only) - updated for Cloudinary
+  // 🔹 Upload photo with progress (admin only)
   uploadPhoto: async (file, token, title = '', description = '', onProgress = null) => {
     const formData = new FormData();
-    formData.append('image', file); // must match backend's multer field name
+    formData.append('image', file); // field name must match backend
     formData.append('title', title);
     formData.append('description', description);
 
-    const xhr = new XMLHttpRequest();
-
     return new Promise((resolve, reject) => {
-      xhr.upload.addEventListener('progress', (event) => {
-        if (onProgress && event.lengthComputable) {
-          const progress = (event.loaded / event.total) * 100;
-          onProgress(progress);
-        }
-      });
+      const xhr = new XMLHttpRequest();
 
-      xhr.addEventListener('load', () => {
+      if (onProgress) {
+        xhr.upload.addEventListener('progress', (event) => {
+          if (event.lengthComputable) {
+            const progress = (event.loaded / event.total) * 100;
+            onProgress(progress);
+          }
+        });
+      }
+
+      xhr.onload = () => {
         if (xhr.status >= 200 && xhr.status < 300) {
           try {
-            const response = JSON.parse(xhr.responseText);
-            resolve(response);
-          } catch (error) {
-            reject(new Error('Invalid JSON response'));
+            resolve(JSON.parse(xhr.responseText));
+          } catch {
+            reject(new Error('Invalid JSON response from server'));
           }
         } else {
-          reject(new Error(`Upload failed: ${xhr.status}`));
+          reject(new Error(`Upload failed: ${xhr.status} ${xhr.statusText}`));
         }
-      });
+      };
 
-      xhr.addEventListener('error', () => {
-        reject(new Error('Upload failed'));
-      });
+      xhr.onerror = () => reject(new Error('Upload failed due to network error'));
 
       xhr.open('POST', `${API_CONFIG.BASE_URL}/media/photo`);
       xhr.setRequestHeader('Authorization', `Bearer ${token}`);
@@ -68,60 +85,55 @@ export const mediaAPI = {
     });
   },
 
-  // Add video (admin only)
+  // 🔹 Add video
   addVideo: async (videoData, token) => {
-    const response = await apiRequest('/media/video', {
+    return apiRequest('/media/video', {
       method: 'POST',
-      token: token,
+      token,
       body: JSON.stringify(videoData),
     });
-    return response.data || response;
   },
 
-  // Update media (admin only)
+  // 🔹 Update media
   updateMedia: async (id, updateData, token) => {
-    const response = await apiRequest(`/media/${id}`, {
+    return apiRequest(`/media/${id}`, {
       method: 'PUT',
-      headers: { Authorization: `Bearer ${token}` },
+      token,
       body: JSON.stringify(updateData),
     });
-    return response.data || response;
   },
 
-  // Delete media (admin only)
+  // 🔹 Delete single media
   deleteMedia: async (id, token) => {
-    const response = await apiRequest(`/media/${id}`, {
+    return apiRequest(`/media/${id}`, {
       method: 'DELETE',
-      headers: { Authorization: `Bearer ${token}` },
+      token,
     });
-    return response.data || response;
   },
 
-  // Bulk delete media (admin only)
+  // 🔹 Bulk delete
   bulkDelete: async (ids, token) => {
-    const response = await apiRequest('/media/bulk-delete', {
+    return apiRequest('/media/bulk-delete', {
       method: 'DELETE',
-      headers: { Authorization: `Bearer ${token}` },
+      token,
       body: JSON.stringify({ ids }),
     });
-    return response.data || response;
   },
 
-  // Get media statistics (admin only)
+  // 🔹 Get stats
   getStats: async (token) => {
-    const response = await apiRequest('/media/stats', {
-      headers: { Authorization: `Bearer ${token}` },
+    return apiRequest('/media/stats', {
+      method: 'GET',
+      token,
     });
-    return response.data || response;
   },
 
-  // Reorder media (admin only)
+  // 🔹 Reorder media
   reorderMedia: async (orderData, token) => {
-    const response = await apiRequest('/media/reorder', {
+    return apiRequest('/media/reorder', {
       method: 'PUT',
-      headers: { Authorization: `Bearer ${token}` },
+      token,
       body: JSON.stringify(orderData),
     });
-    return response.data || response;
   },
 };

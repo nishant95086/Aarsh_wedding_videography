@@ -1,16 +1,27 @@
+// =====================
 // API Configuration
-export const API_CONFIG = {
-  // import.meta.env.VITE_API_BASE_URL || 
-  BASE_URL:import.meta.env.VITE_BACKEND_URL, // remove trailing slash
-  TIMEOUT: 10000,
-  RETRY_ATTEMPTS: 3,
+// =====================
+const normalizeBaseUrl = (url) => {
+  if (!url) return '';
+  return url.endsWith('/') ? url.slice(0, -1) : url;
 };
 
-// Common headers
-export const getHeaders = (token = null, isFormData = false) => {
-  const headers = {};
+export const API_CONFIG = {
+  BASE_URL: normalizeBaseUrl(import.meta.env.VITE_BACKEND || 'http://localhost:5000/api'), // auto remove trailing slash
+  TIMEOUT: 10000,     // request timeout (ms)
+  RETRY_ATTEMPTS: 3,  // number of retry attempts on failure
+};
 
-  // Only set Content-Type if NOT FormData (browser sets correct boundaries automatically)
+// =====================
+// Headers Utility
+// =====================
+export const getHeaders = (token = null, isFormData = false, extraHeaders = {}) => {
+  const headers = {
+    Accept: 'application/json',
+    ...extraHeaders,
+  };
+
+  // Only set Content-Type if not FormData
   if (!isFormData) {
     headers['Content-Type'] = 'application/json';
   }
@@ -22,12 +33,16 @@ export const getHeaders = (token = null, isFormData = false) => {
   return headers;
 };
 
-// Error messages
+// =====================
+// Error Messages
+// =====================
 export const ERROR_MESSAGES = {
   NETWORK_ERROR: 'Network error. Please check your connection.',
   UNAUTHORIZED: 'Unauthorized access. Please login again.',
-  FORBIDDEN: 'Access denied. You don\'t have permission.',
+  FORBIDDEN: "Access denied. You don't have permission.",
   NOT_FOUND: 'Resource not found.',
-  SERVER_ERROR: 'Server error. Please try again later.',
+  BAD_REQUEST: 'Invalid request. Please check your input.',
   VALIDATION_ERROR: 'Please check your input and try again.',
+  SERVER_ERROR: 'Server error. Please try again later.',
+  UNKNOWN_ERROR: 'An unexpected error occurred.',
 };
