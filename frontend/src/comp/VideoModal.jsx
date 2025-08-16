@@ -93,16 +93,6 @@ export default function VideoModal({ onClose, videoUrl }) {
         className="relative w-full max-w-5xl aspect-video bg-black rounded-lg shadow-lg overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Close button */}
-        <button
-          ref={closeButtonRef}
-          onClick={onClose}
-          className="absolute top-1 right-2 bg-white rounded-full p-1 shadow hover:bg-gray-100 transition z-10 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2"
-          aria-label="Close video modal"
-        >
-          <X className="w-6 h-6 text-gray-700 cursor-pointer" />
-        </button>
-
         {/* Loading spinner */}
         {videoLoading && !videoError && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/70 transition-opacity">
