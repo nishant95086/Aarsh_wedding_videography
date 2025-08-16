@@ -15,7 +15,11 @@ import ScrollProgress from "../../components/motion-primitives/scroll-progress";
 import { mediaAPI } from "../api";
 import { FaBriefcase } from "react-icons/fa";
 
+<<<<<<< HEAD
 // Lazy load modals
+=======
+// Lazy load modals so they don’t block initial render
+>>>>>>> fe5662b59ce97992edb9b586b1f7ade34a8d99ca
 const ImageModal = lazy(() => import("../comp/ImageModal"));
 const VideoModal = lazy(() => import("../comp/VideoModal"));
 
@@ -79,6 +83,7 @@ export default function Gallery() {
 
   // Photo thumbnails - optimized with Cloudinary transformations
   const photoThumbnails = useMemo(() => {
+<<<<<<< HEAD
     return photos.map((photo) => {
       const baseUrl = photo.imageUrl;
       return {
@@ -91,6 +96,16 @@ export default function Gallery() {
           : "/default-image.svg"
       };
     });
+=======
+    return photos.map((photo) => ({
+      ...photo,
+      thumbnailUrl:
+        photo.thumbnailUrl ||
+        (photo.imageUrl
+          ? `${photo.imageUrl}?w=600&h=600&fit=crop&fm=webp`
+          : "/default-image.svg"),
+    }));
+>>>>>>> fe5662b59ce97992edb9b586b1f7ade34a8d99ca
   }, [photos]);
 
   const handleImageClick = useCallback((url) => setSelectedImage(url), []);
@@ -103,7 +118,11 @@ export default function Gallery() {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pink-50 via-white to-purple-50">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-500 mx-auto"></div>
+<<<<<<< HEAD
           <p className="mt-4 text-gray-600">Framing the masterpieces…</p>
+=======
+          <p className="mt-4 text-gray-600">Good things take time… loading gallery.</p>
+>>>>>>> fe5662b59ce97992edb9b586b1f7ade34a8d99ca
         </div>
       </div>
     );
