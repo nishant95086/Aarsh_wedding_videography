@@ -8,22 +8,18 @@ export default function ImageModal({ onClose, imageUrl }) {
   const modalRef = useRef(null);
   const closeButtonRef = useRef(null);
 
-  // 🔑 Add Cloudinary transformations for optimization (prevent 10MB load)
+  // Cloudinary optimization
   const optimizedImageUrl = imageUrl
     ? `${imageUrl.replace("/upload/", "/upload/f_auto,q_auto,w_1600/")}`
     : null;
 
   const handleKeyDown = useCallback(
     (e) => {
-      if (e.key === "Escape") {
-        onClose();
-      }
-      if (e.key === "+" || e.key === "=") {
+      if (e.key === "Escape") onClose();
+      if (e.key === "+" || e.key === "=")
         setZoom((z) => Math.min(z + 0.25, 3));
-      }
-      if (e.key === "-" || e.key === "_") {
+      if (e.key === "-" || e.key === "_")
         setZoom((z) => Math.max(z - 0.25, 1));
-      }
     },
     [onClose]
   );
@@ -41,10 +37,7 @@ export default function ImageModal({ onClose, imageUrl }) {
   useEffect(() => {
     document.body.style.overflow = "hidden";
     document.addEventListener("keydown", handleKeyDown);
-
-    if (closeButtonRef.current) {
-      closeButtonRef.current.focus();
-    }
+    if (closeButtonRef.current) closeButtonRef.current.focus();
 
     return () => {
       document.body.style.overflow = "";
@@ -52,7 +45,6 @@ export default function ImageModal({ onClose, imageUrl }) {
     };
   }, [handleKeyDown]);
 
-  // Reset state when image changes
   useEffect(() => {
     setImageLoading(true);
     setImageError(false);
@@ -72,21 +64,21 @@ export default function ImageModal({ onClose, imageUrl }) {
       aria-describedby="image-modal-desc"
     >
       <div
-        className="relative max-w-5xl w-full max-h-[90vh]"
+        className="relative w-full h-full flex items-center justify-center"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Close Button */}
         <button
           ref={closeButtonRef}
           onClick={onClose}
-          className="absolute -top-10 right-0 bg-white rounded-full p-1 shadow hover:bg-gray-100 transition z-10 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2"
+          className="absolute top-4 right-4 bg-white rounded-full p-1 shadow hover:bg-gray-100 transition z-10 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2"
           aria-label="Close image modal"
         >
           <X className="w-6 h-6 text-gray-700 cursor-pointer" />
         </button>
 
         {/* Zoom Controls */}
-        <div className="absolute -top-10 left-0 flex gap-2">
+        <div className="absolute top-4 left-4 flex gap-2 z-10">
           <button
             onClick={() => setZoom((z) => Math.max(z - 0.25, 1))}
             className="bg-white rounded-full p-2 shadow hover:bg-gray-100 transition"
@@ -105,7 +97,7 @@ export default function ImageModal({ onClose, imageUrl }) {
 
         {/* Image Wrapper */}
         <div
-          className="overflow-auto max-h-[90vh] relative flex items-center justify-center"
+          className="overflow-auto max-h-[90vh] max-w-full flex items-center justify-center"
           id="image-modal-desc"
         >
           {imageLoading && (
@@ -127,13 +119,15 @@ export default function ImageModal({ onClose, imageUrl }) {
               src={optimizedImageUrl}
               alt="Full View"
               id="image-modal-title"
-              className={`rounded-lg shadow-xl transition-opacity duration-300 ${
+              className={`rounded-lg shadow-xl transition-opacity duration-300 object-contain ${
                 imageLoading ? "opacity-0" : "opacity-100"
               }`}
               loading="lazy"
               onLoad={handleImageLoad}
               onError={handleImageError}
               style={{
+                maxWidth: "100%",
+                maxHeight: "90vh", // ensures full image fits
                 transform: `scale(${zoom})`,
                 transformOrigin: "center center",
                 transition: "transform 0.2s ease",
