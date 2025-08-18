@@ -6,39 +6,30 @@ export default function ImageModal({ onClose, imageUrl }) {
   const [imageError, setImageError] = useState(false);
   const [zoom, setZoom] = useState(1);
   const modalRef = useRef(null);
-  const closeButtonRef = useRef(null);
 
-  // Cloudinary optimization
+  // Optimize Cloudinary
   const optimizedImageUrl = imageUrl
-    ? `${imageUrl.replace("/upload/", "/upload/f_auto,q_auto,w_1600/")}`
+    ? imageUrl.replace("/upload/", "/upload/f_auto,q_auto,w_1600/")
     : null;
 
+  // Close modal with ESC
   const handleKeyDown = useCallback(
     (e) => {
       if (e.key === "Escape") onClose();
-      if (e.key === "+" || e.key === "=")
-        setZoom((z) => Math.min(z + 0.25, 3));
-      if (e.key === "-" || e.key === "_")
-        setZoom((z) => Math.max(z - 0.25, 1));
+      if (e.key === "+" || e.key === "=") setZoom((z) => Math.min(z + 0.25, 3));
+      if (e.key === "-" || e.key === "_") setZoom((z) => Math.max(z - 0.25, 1));
     },
     [onClose]
   );
 
-  const handleImageLoad = useCallback(() => {
-    setImageLoading(false);
-    setImageError(false);
-  }, []);
-
-  const handleImageError = useCallback(() => {
-    setImageLoading(false);
-    setImageError(true);
-  }, []);
+  // Click to zoom toggle
+  const handleImageClick = () => {
+    setZoom((z) => (z === 1 ? 1.75 : 1));
+  };
 
   useEffect(() => {
     document.body.style.overflow = "hidden";
     document.addEventListener("keydown", handleKeyDown);
-    if (closeButtonRef.current) closeButtonRef.current.focus();
-
     return () => {
       document.body.style.overflow = "";
       document.removeEventListener("keydown", handleKeyDown);
@@ -56,81 +47,69 @@ export default function ImageModal({ onClose, imageUrl }) {
   return (
     <div
       ref={modalRef}
-      className="fixed inset-0 z-50 backdrop-blur-md bg-black/70 flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center p-2 md:p-6"
       onClick={onClose}
       role="dialog"
       aria-modal="true"
-      aria-labelledby="image-modal-title"
-      aria-describedby="image-modal-desc"
     >
       <div
         className="relative w-full h-full flex items-center justify-center"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Close Button */}
+        {/* Close button */}
         <button
-          ref={closeButtonRef}
           onClick={onClose}
-          className="absolute top-4 right-4 bg-white rounded-full p-1 shadow hover:bg-gray-100 transition z-10 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2"
-          aria-label="Close image modal"
+          className="absolute top-4 right-4 bg-white/80 backdrop-blur p-2 rounded-full shadow hover:bg-white transition z-20"
+          aria-label="Close"
         >
-          <X className="w-6 h-6 text-gray-700 cursor-pointer" />
+          <X className="w-6 h-6 text-gray-800" />
         </button>
 
-        {/* Zoom Controls */}
-        <div className="absolute top-4 left-4 flex gap-2 z-10">
+        {/* Zoom controls */}
+        <div className="absolute bottom-4 right-4 flex gap-2 z-20">
           <button
             onClick={() => setZoom((z) => Math.max(z - 0.25, 1))}
-            className="bg-white rounded-full p-2 shadow hover:bg-gray-100 transition"
+            className="bg-white/80 backdrop-blur p-2 rounded-full shadow hover:bg-white transition"
             aria-label="Zoom Out"
           >
-            <ZoomOut className="w-5 h-5 text-gray-700" />
+            <ZoomOut className="w-5 h-5 text-gray-800" />
           </button>
           <button
             onClick={() => setZoom((z) => Math.min(z + 0.25, 3))}
-            className="bg-white rounded-full p-2 shadow hover:bg-gray-100 transition"
+            className="bg-white/80 backdrop-blur p-2 rounded-full shadow hover:bg-white transition"
             aria-label="Zoom In"
           >
-            <ZoomIn className="w-5 h-5 text-gray-700" />
+            <ZoomIn className="w-5 h-5 text-gray-800" />
           </button>
         </div>
 
-        {/* Image Wrapper */}
-        <div
-          className="overflow-auto max-h-[90vh] max-w-full flex items-center justify-center"
-          id="image-modal-desc"
-        >
+        {/* Image wrapper */}
+        <div className="max-h-[90vh] max-w-[95vw] flex items-center justify-center overflow-hidden rounded-xl">
           {imageLoading && (
-            <div className="absolute inset-0 flex items-center justify-center bg-gray-100 rounded-lg">
-              <Loader2 className="w-8 h-8 text-gray-500 animate-spin" />
-              <span className="sr-only">Loading image...</span>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <Loader2 className="w-8 h-8 text-gray-300 animate-spin" />
             </div>
           )}
 
           {imageError ? (
-            <div className="flex items-center justify-center h-64 bg-gray-100 rounded-lg">
-              <div className="text-center">
-                <X className="w-12 h-12 text-gray-400 mx-auto mb-2" />
-                <p className="text-gray-500">Failed to load image</p>
-              </div>
+            <div className="flex items-center justify-center h-64 w-64 bg-gray-200 rounded-lg">
+              <p className="text-gray-600">Failed to load image</p>
             </div>
           ) : (
             <img
               src={optimizedImageUrl}
-              alt="Full View"
-              id="image-modal-title"
-              className={`rounded-lg shadow-xl transition-opacity duration-300 object-contain ${
+              alt="Preview"
+              onLoad={() => setImageLoading(false)}
+              onError={() => setImageError(true)}
+              onClick={handleImageClick}
+              className={`cursor-zoom-in rounded-xl shadow-xl transition-transform duration-300 ease-in-out object-contain ${
                 imageLoading ? "opacity-0" : "opacity-100"
               }`}
-              loading="lazy"
-              onLoad={handleImageLoad}
-              onError={handleImageError}
               style={{
-                maxWidth: "100%",
-                maxHeight: "90vh", // ensures full image fits
+                maxWidth: "95vw",
+                maxHeight: "90vh",
                 transform: `scale(${zoom})`,
                 transformOrigin: "center center",
-                transition: "transform 0.2s ease",
               }}
             />
           )}
