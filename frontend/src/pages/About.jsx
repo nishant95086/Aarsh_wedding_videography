@@ -20,7 +20,7 @@ export default function About() {
         {/* ✅ Scroll bar at top */}
         <ScrollProgress
           containerRef={containerRef}
-          className="fixed top-0 left-0 right-0 h-1 bg-gradient-to-r from-pink-500 to-purple-500 z-50"
+          className="fixed top-0 left-0 right-0 h-1 bg-red-500 z-50"
         />
         <div className="mt-35 text-center">
           <p className="text-4xl px-3 sm:text-6xl  py-3 font-EmilysCandy text-transparent bg-gradient-to-tr from-pink-500 to-purple-500 bg-clip-text font-bold">
