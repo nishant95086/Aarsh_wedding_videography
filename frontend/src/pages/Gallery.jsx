@@ -130,7 +130,7 @@ export default function Gallery() {
       <div ref={containerRef} className="relative h-screen overflow-y-scroll scroll-smooth">
         <ScrollProgress
           containerRef={containerRef}
-          className="fixed top-0 left-0 right-0 h-1 bg-gradient-to-r from-pink-500 to-purple-500 z-50"
+          className="fixed top-0 left-0 right-0 h-1 bg-red-500 z-50"
         />
 
         {/* Title */}
