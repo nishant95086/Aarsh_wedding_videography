@@ -18,7 +18,7 @@ export default function Service() {
           {/* ✅ Scroll bar at top */}
           <ScrollProgress
             containerRef={containerRef}
-            className="fixed top-0 left-0 right-0 h-1 bg-gradient-to-r from-pink-500 to-purple-500 z-50"
+            className="fixed top-0 left-0 right-0 h-1 bg-red-500 z-50"
           />
       <div className="flex flex-col text-center items-center">
         <h1 className="text-4xl sm:text-6xl font-EmilysCandy mt-40 font-bold bg-gradient-to-l from-pink-500 to-purple-500 bg-clip-text text-transparent p-4">
