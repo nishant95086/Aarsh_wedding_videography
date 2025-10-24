@@ -15,14 +15,24 @@ const ContactForm = () => {
   const [status, setStatus] = useState(null); // "success" or "error"
 
   const services = [
-    "Photography",
-    "Food Catering",
-    "Decorations",
-    "Grand Entry - Hip Hop",
-    "Grand Entry - Traditional",
-    "Singers",
-    "Dancers",
-  ];
+  "Basic Wedding Package",
+  "Event Photography Package",
+  "Portrait Session",
+  "Wedding Videography",
+  "Pre-Wedding Shoot",
+  "Maternity Photography",
+  "Engagement Photography",
+  "Anniversary Photography",
+  "Photo Editing & Retouching",
+  "Premium Packages",
+  "Photography",
+  "Food Catering",
+  "Decorations",
+  "Grand Entry - Hip Hop",
+  "Grand Entry - Traditional",
+  "Singers",
+  "Dancers",
+];
 
   const handleChange = (e) => {
     const { name, value } = e.target;
