@@ -9,6 +9,7 @@ import {
   Image,
   Star,
   Sparkles,
+  Heart,
   ArrowRight,
   Check,
 } from "lucide-react";
@@ -36,9 +37,10 @@ const services = [
     description: "Professional event coverage capturing every highlight and candid moment.",
     features: [
       "2 Professional Photographers",
-      "250+ High-Res Photos",
+      "250+ High-Resolution Photos",
       "4-6 Hour Coverage",
-      "Digital Download"
+      "Digital Download",
+      "Full Event Highlights"
     ],
     gradient: "from-purple-500 to-pink-500",
   },
@@ -47,10 +49,11 @@ const services = [
     title: "Portrait Session",
     description: "Professional portrait photography designed to bring out your best self.",
     features: [
-      "60 Minute Session",
+      "60-Minute Session",
       "25+ Retouched Photos",
-      "Studio or Outdoor",
-      "Wardrobe Guidance"
+      "Studio or Outdoor Setup",
+      "Wardrobe Guidance",
+      "Creative Lighting Options"
     ],
     gradient: "from-fuchsia-500 to-purple-500",
   },
@@ -61,8 +64,9 @@ const services = [
     features: [
       "Cinematic Storytelling",
       "Drone & Multi-Angle Shots",
-      "Highlight & Full Videos",
-      "4K Resolution Delivery"
+      "Highlight & Full-Length Videos",
+      "4K Resolution Delivery",
+      "Professional Audio & Effects"
     ],
     gradient: "from-pink-600 to-purple-600",
   },
@@ -74,7 +78,8 @@ const services = [
       "Creative Concept Planning",
       "Multiple Outfit Changes",
       "Candid & Posed Shots",
-      "Edited Digital Album"
+      "Edited Digital Album",
+      "Location Scouting Assistance"
     ],
     gradient: "from-purple-600 to-fuchsia-500",
   },
@@ -84,9 +89,10 @@ const services = [
     description: "Capture the beauty of motherhood with elegant maternity portraits.",
     features: [
       "Studio or Outdoor Session",
-      "Theme-Based Props",
+      "Theme-Based Props & Decor",
       "High-Resolution Photos",
-      "Professional Retouching"
+      "Professional Retouching",
+      "Family Participation Options"
     ],
     gradient: "from-pink-500 to-purple-400",
   },
@@ -97,8 +103,9 @@ const services = [
     features: [
       "Outdoor or Indoor Setup",
       "Posed & Candid Shots",
-      "Custom Lighting",
-      "Edited Digital Gallery"
+      "Custom Lighting & Props",
+      "Edited Digital Gallery",
+      "Same-Day Preview Option"
     ],
     gradient: "from-purple-500 to-pink-400",
   },
@@ -110,7 +117,8 @@ const services = [
       "Couple Portraits",
       "Decor & Props Support",
       "Candid Coverage",
-      "Edited Photo Collection"
+      "Edited Photo Collection",
+      "Custom Theme Options"
     ],
     gradient: "from-fuchsia-600 to-purple-500",
   },
@@ -120,8 +128,9 @@ const services = [
     description: "Professional photo enhancement and retouching services for perfect results.",
     features: [
       "Color Correction",
-      "Skin Smoothing",
+      "Skin Smoothing & Retouching",
       "Background Enhancement",
+      "Lighting & Tone Adjustments",
       "Custom Editing Requests"
     ],
     gradient: "from-pink-400 to-purple-600",
@@ -134,11 +143,91 @@ const services = [
       "Photo + Video Combo",
       "Pre-Wedding & Engagement",
       "Albums & Online Galleries",
-      "Lifetime Cloud Storage"
+      "Lifetime Cloud Storage",
+      "Cinematic Film Editing"
     ],
     gradient: "from-purple-600 to-pink-600",
   },
+  {
+    icon: Sparkles,
+    title: "Decorations",
+    description: "Transform your venue with stunning themed decorations and lighting arrangements.",
+    features: [
+      "Stage & Venue Setup",
+      "Floral & Theme-Based Decor",
+      "Lighting & Ambience Design",
+      "Custom Color Palettes",
+      "On-Site Coordination"
+    ],
+    gradient: "from-fuchsia-500 to-purple-500",
+  },
+  {
+    icon: Gift,
+    title: "Food Catering",
+    description: "Delicious and customizable catering services to make your event memorable.",
+    features: [
+      "Wide Variety of Cuisines",
+      "Live Food Counters",
+      "Professional Serving Team",
+      "Custom Menu Planning",
+      "On-Time Service"
+    ],
+    gradient: "from-purple-500 to-pink-500",
+  },
+  {
+    icon: Star,
+    title: "Grand Entry - Hip Hop",
+    description: "Make a bold entrance with a high-energy hip-hop themed grand entry setup.",
+    features: [
+      "Professional Dancers",
+      "LED & Smoke Effects",
+      "Music & Light Sync",
+      "Stage Coordination",
+      "Custom Entry Themes"
+    ],
+    gradient: "from-pink-500 to-purple-600",
+  },
+  {
+    icon: Heart,
+    title: "Grand Entry - Traditional",
+    description: "Celebrate your arrival in traditional style with cultural music and decor.",
+    features: [
+      "Traditional Musicians & Dhol",
+      "Flower Pathway",
+      "Lighting & Decor",
+      "Stage Setup",
+      "Custom Ritual Add-ons"
+    ],
+    gradient: "from-purple-600 to-fuchsia-500",
+  },
+  {
+    icon: Sparkles,
+    title: "Singers",
+    description: "Add melody and magic to your event with live performances from talented singers.",
+    features: [
+      "Professional Male & Female Artists",
+      "Live Band or Karaoke Setup",
+      "Sound & Mic Equipment",
+      "Custom Song Selection",
+      "On-Stage Coordination"
+    ],
+    gradient: "from-pink-500 to-purple-400",
+  },
+  {
+    icon: Sparkles,
+    title: "Dancers",
+    description: "Energize your event with graceful and powerful dance performances.",
+    features: [
+      "Professional Dance Teams",
+      "Choreographed Performances",
+      "Multiple Dance Styles",
+      "Costumes & Stage Effects",
+      "Custom Couple Entry Acts"
+    ],
+    gradient: "from-purple-500 to-pink-400",
+  },
 ];
+
 
 export default function Service() {
   const containerRef = useRef(null);
