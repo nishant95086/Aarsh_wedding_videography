@@ -264,7 +264,7 @@ export default function Service() {
         <div className="absolute bottom-20 left-1/4 w-80 h-80 md:w-96 md:h-96 bg-fuchsia-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse" style={{ animationDelay: "2s" }}></div>
       </div>
 
-      <div ref={containerRef} className="relative mt-40">
+      <div ref={containerRef} className="relative mt-20">
         {/* Header Section */}
         <motion.div
           initial="hidden"
