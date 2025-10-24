@@ -16,6 +16,7 @@ import {
 import { MdOutlineConnectWithoutContact } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
 import Footer from "../comp/footer";
+import ScrollProgress from "../../components/motion-primitives/scroll-progress";
 
 const services = [
   {
@@ -249,6 +250,12 @@ export default function Service() {
   };
 
   return (
+    <div ref={containerRef} className="relative h-screen overflow-y-scroll scroll-smoot">
+      {/* Scroll Progress */}
+      <ScrollProgress
+        containerRef={containerRef}
+        className="fixed top-0 left-0 right-0 h-1 bg-red-500 z-50"
+      />
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-purple-100 overflow-hidden">
       {/* Decorative Background Elements */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
@@ -257,7 +264,7 @@ export default function Service() {
         <div className="absolute bottom-20 left-1/4 w-80 h-80 md:w-96 md:h-96 bg-fuchsia-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse" style={{ animationDelay: "2s" }}></div>
       </div>
 
-      <div ref={containerRef} className="relative">
+      <div ref={containerRef} className="relative mt-40">
         {/* Header Section */}
         <motion.div
           initial="hidden"
@@ -366,5 +373,6 @@ export default function Service() {
         </motion.div>
       </div>
     </div>
+      </div>
   );
 }
