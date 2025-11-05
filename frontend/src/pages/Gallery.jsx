@@ -8,7 +8,7 @@ import React, {
   Suspense
 } from "react";
 import Button from "../comp/Button";
-import { Image, Video, Play } from "lucide-react";
+import { Image, Video } from "lucide-react";
 import Footer from "../comp/footer";
 import { useNavigate } from "react-router-dom";
 import ScrollProgress from "../../components/motion-primitives/scroll-progress";
@@ -151,7 +151,10 @@ export default function Gallery() {
         <div className="text-center space-y-6">
           <div className="relative">
             <div className="animate-spin rounded-full h-16 w-16 border-4 border-pink-200 border-t-pink-500 mx-auto"></div>
-            <div className="absolute inset-0 rounded-full h-16 w-16 border-4 border-transparent border-r-purple-500 animate-spin mx-auto" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }}></div>
+            <div
+              className="absolute inset-0 rounded-full h-16 w-16 border-4 border-transparent border-r-purple-500 animate-spin mx-auto"
+              style={{ animationDirection: "reverse", animationDuration: "1.5s" }}
+            ></div>
           </div>
           <div>
             <p className="text-lg font-semibold text-gray-700">Loading Gallery</p>
@@ -168,8 +171,18 @@ export default function Gallery() {
         <div className="text-center max-w-md">
           <div className="bg-white rounded-2xl shadow-xl p-8 border border-red-100">
             <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              <svg
+                className="w-8 h-8 text-red-500"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                />
               </svg>
             </div>
             <h3 className="text-xl font-bold text-gray-800 mb-2">Oops! Something went wrong</h3>
@@ -186,6 +199,7 @@ export default function Gallery() {
     );
   }
 
+  // ✅ UPDATED CELL COMPONENT
   const Cell = ({ columnIndex, rowIndex, style, data }) => {
     const index = rowIndex * data.columnCount + columnIndex;
     const item = data.items[index];
@@ -196,8 +210,11 @@ export default function Gallery() {
       left: style.left + GAP,
       top: style.top + GAP,
       width: style.width - GAP,
-      height: style.height - GAP
+      height: style.height - GAP,
+      maxWidth: "100%",
     };
+
+    const isMobileOrTablet = typeof window !== "undefined" && window.innerWidth < 1024;
 
     if (data.viewType === "photos") {
       return (
@@ -215,9 +232,15 @@ export default function Gallery() {
                 style={{ contentVisibility: "auto" }}
                 onError={(e) => (e.target.src = "/default-image.svg")}
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/0 to-black/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             </div>
-            <div className="absolute bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md p-4 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+
+            <div
+              className={`absolute bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md p-4 transition-transform duration-300 ${
+                isMobileOrTablet
+                  ? ""
+                  : "transform translate-y-full group-hover:translate-y-0"
+              }`}
+            >
               <h3 className="font-bold text-gray-800 text-sm truncate">{item.title}</h3>
               <p className="text-xs text-gray-500 mt-1">Click to view full size</p>
             </div>
@@ -238,16 +261,6 @@ export default function Gallery() {
                 style={{ contentVisibility: "auto" }}
                 onError={(e) => (e.target.src = "/default-video-thumbnail.svg")}
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-black/0"></div>
-            </div>
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="bg-white/20 backdrop-blur-sm rounded-full p-4 border-2 border-white/40 group-hover:bg-white/30 group-hover:scale-110 transition-all duration-300 shadow-lg">
-                <Play className="w-8 h-8 text-white drop-shadow-lg" fill="white" />
-              </div>
-            </div>
-            <div className="absolute bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md p-4 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300">
-              <h3 className="font-bold text-gray-800 text-sm truncate">{item.title}</h3>
-              <p className="text-xs text-gray-500 mt-1">Click to play video</p>
             </div>
           </div>
         </div>
@@ -259,7 +272,10 @@ export default function Gallery() {
 
   return (
     <>
-      <div ref={containerRef} className="relative min-h-screen overflow-y-auto scroll-smooth bg-gradient-to-br from-pink-50 via-white to-purple-50">
+      <div
+        ref={containerRef}
+        className="relative min-h-screen overflow-y-auto scroll-smooth bg-gradient-to-br from-pink-50 via-white to-purple-50"
+      >
         <ScrollProgress
           containerRef={containerRef}
           className="fixed top-0 left-0 right-0 h-1 bg-gradient-to-r from-pink-500 to-purple-500 z-50 shadow-lg"
