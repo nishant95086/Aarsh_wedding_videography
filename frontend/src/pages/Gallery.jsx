@@ -19,36 +19,13 @@ import { FixedSizeGrid as Grid } from "react-window";
 const ImageModal = lazy(() => import("../comp/ImageModal"));
 const VideoModal = lazy(() => import("../comp/VideoModal"));
 
-// PNG icon (base64 or import your PNG file here)
-const PlayIcon = () => (
-  <img
-    src="/play-icon.png" // Change this if you have a different path or import
-    alt="Play"
-    style={{
-      position: "absolute",
-      top: "50%",
-      left: "50%",
-      width: "48px",
-      height: "48px",
-      transform: "translate(-50%, -50%)",
-      pointerEvents: "none",
-      opacity: 0.9,
-      zIndex: 4,
-      filter: "drop-shadow(0 2px 8px rgba(0,0,0,0.21))",
-    }}
-    draggable={false}
-  />
-);
-
 // ✅ Memoized Cell for better performance
 const Cell = React.memo(({ columnIndex, rowIndex, style, data }) => {
   const index = rowIndex * data.columnCount + columnIndex;
   const item = data.items[index];
   if (!item) return null;
 
-  // LESS GAP ONLY FOR VIDEOS, normal GAP for photos
-  const GAP = data.viewType === "videos" ? 8 : 20; // reduce gap for videos
-
+  const GAP = 20;
   const cardStyle = {
     ...style,
     left: style.left + GAP,
@@ -56,7 +33,6 @@ const Cell = React.memo(({ columnIndex, rowIndex, style, data }) => {
     width: style.width - GAP,
     height: style.height - GAP,
     maxWidth: "100%",
-    position: "relative", // needed for play icon!
   };
 
   const isMobileOrTablet =
@@ -98,8 +74,19 @@ const Cell = React.memo(({ columnIndex, rowIndex, style, data }) => {
       </div>
     );
   } else {
+    // ✅ Updated video section with reduced gap + play icon overlay
+    const reducedGap = 10;
+    const videoCardStyle = {
+      ...style,
+      left: style.left + reducedGap,
+      top: style.top + reducedGap,
+      width: style.width - reducedGap,
+      height: style.height - reducedGap,
+      maxWidth: "100%",
+    };
+
     return (
-      <div style={cardStyle} onClick={() => data.handleVideoClick(item.videoUrl)}>
+      <div style={videoCardStyle} onClick={() => data.handleVideoClick(item.videoUrl)}>
         <div className="group relative rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl cursor-pointer transition-all duration-300 transform hover:-translate-y-1 bg-white border border-gray-100">
           <div className="aspect-video overflow-hidden relative">
             <img
@@ -111,8 +98,24 @@ const Cell = React.memo(({ columnIndex, rowIndex, style, data }) => {
               style={{ contentVisibility: "auto" }}
               onError={(e) => (e.target.src = "/default-video-thumbnail.svg")}
             />
-            {/* Play PNG icon */}
-            <PlayIcon />
+
+            {/* ✅ Play icon overlay */}
+            <div className="absolute inset-0 flex items-center justify-center bg-black/25 group-hover:bg-black/40 transition-all duration-300">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="white"
+                viewBox="0 0 24 24"
+                strokeWidth="1.5"
+                stroke="none"
+                className="w-12 h-12 opacity-90 group-hover:scale-110 transform transition-transform duration-300"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M8 5v14l11-7z"
+                />
+              </svg>
+            </div>
           </div>
         </div>
       </div>
@@ -131,15 +134,13 @@ export default function Gallery() {
   const navigate = useNavigate();
   const containerRef = useRef(null);
 
-  // The container width is set to 85vw
   const [containerWidth, setContainerWidth] = useState(
     typeof window !== "undefined" ? Math.floor(window.innerWidth * 0.85) : 1020
   );
 
-  // ✅ Optimized Resize Handling with ResizeObserver
   useEffect(() => {
     const handleResize = () => {
-      const w = Math.floor(window.innerWidth * 0.85); // 85vw
+      const w = Math.floor(window.innerWidth * 0.85);
       setContainerWidth(w);
     };
 
@@ -159,7 +160,6 @@ export default function Gallery() {
     };
   }, []);
 
-  // ✅ Fetch media with error handling
   useEffect(() => {
     let active = true;
 
@@ -190,7 +190,6 @@ export default function Gallery() {
     };
   }, []);
 
-  // ✅ Cached YouTube ID extractor
   const getYoutubeId = useCallback((url) => {
     if (!url) return "";
     const match = url.match(
@@ -199,7 +198,6 @@ export default function Gallery() {
     return match ? match[1] : "";
   }, []);
 
-  // ✅ Memoized Thumbnails
   const videoThumbnails = useMemo(
     () =>
       videos.map((video) => {
@@ -242,13 +240,11 @@ export default function Gallery() {
     [photos]
   );
 
-  // ✅ Stable Handlers (memoized)
   const handleImageClick = useCallback((url) => setSelectedImage(url), []);
   const handleVideoClick = useCallback((url) => setSelectedVideo(url), []);
   const handleCloseImageModal = useCallback(() => setSelectedImage(null), []);
   const handleCloseVideoModal = useCallback(() => setSelectedVideo(null), []);
 
-  // ✅ Responsive Columns
   const columnCount = useMemo(() => {
     const w = containerWidth;
     if (w < 640) return 1;
@@ -256,14 +252,12 @@ export default function Gallery() {
     return 3;
   }, [containerWidth]);
 
-  // Use a smaller GAP for videos, normal for photos for correct grid
-  const GAP = viewType === "videos" ? 8 : 20;
+  const GAP = 20;
   const itemWidth = Math.floor((containerWidth - GAP * (columnCount + 1)) / columnCount);
   const itemHeight = itemWidth;
   const items = viewType === "photos" ? photoThumbnails : videoThumbnails;
   const rowCount = Math.ceil(items.length / columnCount);
 
-  // ✅ Memoize Grid Data
   const itemData = useMemo(
     () => ({ items, columnCount, handleImageClick, handleVideoClick, viewType }),
     [items, columnCount, handleImageClick, handleVideoClick, viewType]
@@ -271,7 +265,6 @@ export default function Gallery() {
 
   const gridHeight = Math.max(window.innerHeight - 200, 400);
 
-  // ✅ Early returns (loading / error)
   if (loading)
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pink-50 via-white to-purple-50">
@@ -324,7 +317,6 @@ export default function Gallery() {
       </div>
     );
 
-  // ✅ Main Render
   return (
     <>
       <div
@@ -354,7 +346,7 @@ export default function Gallery() {
           </Button>
         </div>
 
-        {/* Grid Container: full width, but child is 85vw */}
+        {/* Grid Container */}
         <div className="w-full flex justify-center pb-12">
           <div style={{ width: "85vw", maxWidth: "85vw" }}>
             {items.length === 0 ? (
