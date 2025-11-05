@@ -19,13 +19,36 @@ import { FixedSizeGrid as Grid } from "react-window";
 const ImageModal = lazy(() => import("../comp/ImageModal"));
 const VideoModal = lazy(() => import("../comp/VideoModal"));
 
+// PNG icon (base64 or import your PNG file here)
+const PlayIcon = () => (
+  <img
+    src="/play-icon.png" // Change this if you have a different path or import
+    alt="Play"
+    style={{
+      position: "absolute",
+      top: "50%",
+      left: "50%",
+      width: "48px",
+      height: "48px",
+      transform: "translate(-50%, -50%)",
+      pointerEvents: "none",
+      opacity: 0.9,
+      zIndex: 4,
+      filter: "drop-shadow(0 2px 8px rgba(0,0,0,0.21))",
+    }}
+    draggable={false}
+  />
+);
+
 // ✅ Memoized Cell for better performance
 const Cell = React.memo(({ columnIndex, rowIndex, style, data }) => {
   const index = rowIndex * data.columnCount + columnIndex;
   const item = data.items[index];
   if (!item) return null;
 
-  const GAP = 20;
+  // LESS GAP ONLY FOR VIDEOS, normal GAP for photos
+  const GAP = data.viewType === "videos" ? 8 : 20; // reduce gap for videos
+
   const cardStyle = {
     ...style,
     left: style.left + GAP,
@@ -33,6 +56,7 @@ const Cell = React.memo(({ columnIndex, rowIndex, style, data }) => {
     width: style.width - GAP,
     height: style.height - GAP,
     maxWidth: "100%",
+    position: "relative", // needed for play icon!
   };
 
   const isMobileOrTablet =
@@ -77,7 +101,7 @@ const Cell = React.memo(({ columnIndex, rowIndex, style, data }) => {
     return (
       <div style={cardStyle} onClick={() => data.handleVideoClick(item.videoUrl)}>
         <div className="group relative rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl cursor-pointer transition-all duration-300 transform hover:-translate-y-1 bg-white border border-gray-100">
-          <div className="aspect-video overflow-hidden">
+          <div className="aspect-video overflow-hidden relative">
             <img
               src={item.thumbnailUrl}
               alt={item.title || "Video"}
@@ -87,6 +111,8 @@ const Cell = React.memo(({ columnIndex, rowIndex, style, data }) => {
               style={{ contentVisibility: "auto" }}
               onError={(e) => (e.target.src = "/default-video-thumbnail.svg")}
             />
+            {/* Play PNG icon */}
+            <PlayIcon />
           </div>
         </div>
       </div>
@@ -230,7 +256,8 @@ export default function Gallery() {
     return 3;
   }, [containerWidth]);
 
-  const GAP = 20;
+  // Use a smaller GAP for videos, normal for photos for correct grid
+  const GAP = viewType === "videos" ? 8 : 20;
   const itemWidth = Math.floor((containerWidth - GAP * (columnCount + 1)) / columnCount);
   const itemHeight = itemWidth;
   const items = viewType === "photos" ? photoThumbnails : videoThumbnails;
