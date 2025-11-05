@@ -14,6 +14,7 @@ import { useNavigate } from "react-router-dom";
 import ScrollProgress from "../../components/motion-primitives/scroll-progress";
 import { mediaAPI } from "../api";
 import { FaBriefcase } from "react-icons/fa";
+import { FixedSizeGrid as Grid } from "react-window";
 
 // Lazy load modals
 const ImageModal = lazy(() => import("../comp/ImageModal"));
@@ -30,6 +31,32 @@ export default function Gallery() {
   const navigate = useNavigate();
   const containerRef = useRef(null);
 
+  const [containerWidth, setContainerWidth] = useState(
+    typeof window !== "undefined" ? Math.min(window.innerWidth, 1200) : 1200
+  );
+
+  useEffect(() => {
+    const handleResize = () => {
+      const el = containerRef.current;
+      const w = el ? el.clientWidth : window.innerWidth;
+      setContainerWidth(w);
+    };
+    handleResize();
+
+    let ro;
+    if (containerRef.current && typeof ResizeObserver !== "undefined") {
+      ro = new ResizeObserver(() => handleResize());
+      ro.observe(containerRef.current);
+    } else {
+      window.addEventListener("resize", handleResize);
+    }
+
+    return () => {
+      if (ro) ro.disconnect();
+      else window.removeEventListener("resize", handleResize);
+    };
+  }, []);
+
   useEffect(() => {
     const fetchMedia = async () => {
       try {
@@ -37,7 +64,6 @@ export default function Gallery() {
         const res = await mediaAPI.getAll();
         const items = Array.isArray(res) ? res : res?.data || [];
 
-        // Remove duplicates based on _id
         const uniqueItems = Array.from(new Map(items.map(i => [i._id, i])).values());
 
         setPhotos(uniqueItems.filter((item) => item.type === "photo"));
@@ -62,7 +88,6 @@ export default function Gallery() {
     return match ? match[1] : "";
   }, []);
 
-  // Video thumbnails
   const videoThumbnails = useMemo(() => {
     return videos.map((video) => {
       const youtubeId = getYoutubeId(video.videoUrl);
@@ -77,7 +102,6 @@ export default function Gallery() {
     });
   }, [videos, getYoutubeId]);
 
-  // Photo thumbnails - optimized with Cloudinary transformations
   const photoThumbnails = useMemo(() => {
     return photos.map((photo) => {
       const baseUrl = photo.imageUrl;
@@ -88,7 +112,10 @@ export default function Gallery() {
           : "/default-image.svg",
         fullUrl: baseUrl
           ? `${baseUrl}?w=1600&h=1600&fit=inside&auto=format,compress&q=90`
-          : "/default-image.svg"
+          : "/default-image.svg",
+        small400: baseUrl ? `${baseUrl}?w=400&auto=format&q=auto` : "/default-image.svg",
+        small800: baseUrl ? `${baseUrl}?w=800&auto=format&q=auto` : "/default-image.svg",
+        small1200: baseUrl ? `${baseUrl}?w=1200&auto=format&q=auto` : "/default-image.svg",
       };
     });
   }, [photos]);
@@ -97,6 +124,26 @@ export default function Gallery() {
   const handleVideoClick = useCallback((url) => setSelectedVideo(url), []);
   const handleCloseImageModal = useCallback(() => setSelectedImage(null), []);
   const handleCloseVideoModal = useCallback(() => setSelectedVideo(null), []);
+
+  const columnCount = useMemo(() => {
+    const w = containerWidth;
+    if (w < 640) return 1;
+    if (w < 768) return 2;
+    if (w < 1024) return 3;
+    return 4;
+  }, [containerWidth]);
+
+  const GAP = 16;
+  const itemWidth = Math.floor((containerWidth - GAP * (columnCount + 1)) / columnCount);
+  const itemHeight = itemWidth;
+
+  const items = viewType === "photos" ? photoThumbnails : videoThumbnails;
+  const rowCount = Math.ceil(items.length / columnCount);
+
+  const itemData = useMemo(
+    () => ({ items, columnCount, handleImageClick, handleVideoClick, viewType }),
+    [items, columnCount, handleImageClick, handleVideoClick, viewType]
+  );
 
   if (loading) {
     return (
@@ -125,15 +172,82 @@ export default function Gallery() {
     );
   }
 
+  const Cell = ({ columnIndex, rowIndex, style, data }) => {
+    const index = rowIndex * data.columnCount + columnIndex;
+    const item = data.items[index];
+    if (!item) return null;
+
+    const commonWrapperClass =
+      "group relative rounded-xl overflow-hidden shadow-md cursor-pointer transition-transform duration-150 transform-gpu";
+
+    const cardStyle = {
+      ...style,
+      left: style.left + GAP,
+      top: style.top + GAP,
+      width: style.width - GAP,
+      height: style.height - GAP
+    };
+
+    if (data.viewType === "photos") {
+      return (
+        <div style={cardStyle} onClick={() => data.handleImageClick(item.fullUrl)}>
+          <div className={commonWrapperClass + " aspect-square"}>
+            <img
+              src={item.thumbnailUrl}
+              srcSet={`${item.small400} 400w, ${item.small800} 800w, ${item.small1200} 1200w`}
+              sizes="(max-width: 600px) 100vw, (max-width: 1200px) 50vw, 25vw"
+              alt={item.title || "Photo"}
+              className="w-full h-full rounded-2xl object-cover transition-transform duration-200 group-hover:scale-105"
+              loading="lazy"
+              decoding="async"
+              style={{ contentVisibility: "auto" }}
+              onError={(e) => (e.target.src = "/default-image.svg")}
+            />
+            {/* Title Overlay */}
+            <div className="absolute bottom-0 left-0 right-0 bg-white bg-opacity-80 backdrop-blur-sm p-2 text-center">
+              <h3 className="font-semibold text-gray-800 text-sm truncate">{item.title}</h3>
+            </div>
+          </div>
+        </div>
+      );
+    } else {
+      return (
+        <div style={cardStyle} onClick={() => data.handleVideoClick(item.videoUrl)}>
+          <div className={commonWrapperClass + " aspect-video"}>
+            <img
+              src={item.thumbnailUrl}
+              alt={item.title || "Video"}
+              className="w-full h-full rounded-2xl object-cover transition-transform duration-200 group-hover:scale-105"
+              loading="lazy"
+              decoding="async"
+              style={{ contentVisibility: "auto" }}
+              onError={(e) => (e.target.src = "/default-video-thumbnail.svg")}
+            />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="bg-black bg-opacity-50 rounded-full p-3">
+                <Play className="w-7 h-7 text-white" fill="white" />
+              </div>
+            </div>
+            {/* Title Overlay */}
+            <div className="absolute bottom-0 left-0 right-0 bg-white bg-opacity-80 backdrop-blur-sm p-2 text-center">
+              <h3 className="font-semibold text-gray-800 text-sm truncate">{item.title}</h3>
+            </div>
+          </div>
+        </div>
+      );
+    }
+  };
+
+  const gridHeight = Math.max(window.innerHeight - 200, 400);
+
   return (
     <>
-      <div ref={containerRef} className="relative h-screen overflow-y-scroll scroll-smooth">
+      <div ref={containerRef} className="relative min-h-screen overflow-y-auto scroll-smooth">
         <ScrollProgress
           containerRef={containerRef}
           className="fixed top-0 left-0 right-0 h-1 bg-red-500 z-50"
         />
 
-        {/* Title */}
         <div className="flex flex-col items-center">
           <h1 className="text-4xl sm:text-6xl mt-40 font-EmilysCandy font-bold bg-gradient-to-l from-pink-500 to-purple-500 bg-clip-text text-transparent p-4">
             Our Gallery
@@ -143,7 +257,6 @@ export default function Gallery() {
           </p>
         </div>
 
-        {/* Buttons */}
         <div className="flex justify-center gap-5 mt-5">
           <Button onClick={() => setViewType("photos")} icon={Image} active={viewType === "photos"}>
             Photos ({photos.length})
@@ -153,78 +266,35 @@ export default function Gallery() {
           </Button>
         </div>
 
-        {/* Grid */}
-        <div className="flex flex-wrap w-full gap-4 p-5">
-          {viewType === "photos" ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4 w-full">
-              {photoThumbnails.map((photo) => (
-                <div
-                  key={photo._id}
-                  className="group relative rounded-xl overflow-hidden shadow-md cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:shadow-xl aspect-square"
-                  onClick={() => handleImageClick(photo.fullUrl)}
-                >
-                  <img
-                    src={photo.thumbnailUrl}
-                    srcSet={`
-                      ${photo.imageUrl}?w=400&auto=format&q=auto 400w,
-                      ${photo.imageUrl}?w=800&auto=format&q=auto 800w,
-                      ${photo.imageUrl}?w=1200&auto=format&q=auto 1200w
-                    `}
-                    sizes="(max-width: 600px) 100vw, (max-width: 1200px) 50vw, 25vw"
-                    alt={photo.title || "Photo"}
-                    className="w-full h-full rounded-2xl object-cover transition-transform duration-500 group-hover:scale-105"
-                    loading="lazy"
-                    onError={(e) => (e.target.src = "/default-image.svg")}
-                  />
-                  <div className="absolute inset-0 flex items-center justify-center bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-300">
-                    <div className="opacity-0 group-hover:opacity-100 bg-white bg-opacity-90 rounded-full p-2">
-                      <Image className="w-6 h-6 text-gray-700" />
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+        <div className="w-full p-5">
+          {items.length === 0 ? (
+            viewType === "photos" ? (
+              <div className="text-center py-12">
+                <Image className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-500">No photos available yet.</p>
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <Video className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-500">No videos available yet.</p>
+              </div>
+            )
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4 w-full">
-              {videoThumbnails.map((video) => (
-                <div
-                  key={video._id}
-                  className="group relative rounded-xl overflow-hidden shadow-md cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:shadow-xl aspect-video"
-                  onClick={() => handleVideoClick(video.videoUrl)}
-                >
-                  <img
-                    src={video.thumbnailUrl}
-                    alt={video.title || "Video"}
-                    className="w-full h-full rounded-2xl object-cover transition-transform duration-500 group-hover:scale-105"
-                    loading="lazy"
-                    onError={(e) => (e.target.src = "/default-video-thumbnail.svg")}
-                  />
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="bg-black bg-opacity-50 rounded-full p-3">
-                      <Play className="w-8 h-8 text-white" fill="white" />
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <Grid
+              columnCount={columnCount}
+              columnWidth={itemWidth + GAP}
+              height={gridHeight}
+              rowCount={rowCount}
+              rowHeight={itemHeight + GAP}
+              width={containerWidth}
+              itemData={itemData}
+              style={{ overflowX: "hidden" }}
+            >
+              {Cell}
+            </Grid>
           )}
         </div>
 
-        {/* Empty states */}
-        {viewType === "photos" && photos.length === 0 && (
-          <div className="text-center py-12">
-            <Image className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-500">No photos available yet.</p>
-          </div>
-        )}
-        {viewType === "videos" && videos.length === 0 && (
-          <div className="text-center py-12">
-            <Video className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-500">No videos available yet.</p>
-          </div>
-        )}
-
-        {/* Footer */}
         <Footer
           qus="Looking for Professional Services?"
           dic="Explore our wide range of offerings designed to meet your needs."
@@ -234,7 +304,6 @@ export default function Gallery() {
         />
       </div>
 
-      {/* Modals */}
       <Suspense fallback={null}>
         {selectedImage && <ImageModal imageUrl={selectedImage} onClose={handleCloseImageModal} />}
         {selectedVideo && <VideoModal videoUrl={selectedVideo} onClose={handleCloseVideoModal} />}
