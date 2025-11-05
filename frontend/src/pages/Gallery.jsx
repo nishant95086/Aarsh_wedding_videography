@@ -66,7 +66,9 @@ const Cell = React.memo(({ columnIndex, rowIndex, style, data }) => {
             <h3 className="font-bold text-gray-800 text-sm truncate">
               {item.title}
             </h3>
-            <p className="text-xs text-gray-500 mt-1">Click to view full size</p>
+            <p className="text-xs text-gray-500 mt-1">
+              Click to view full size
+            </p>
           </div>
         </div>
       </div>
@@ -103,15 +105,15 @@ export default function Gallery() {
   const navigate = useNavigate();
   const containerRef = useRef(null);
 
+  // The container width is set to 85vw
   const [containerWidth, setContainerWidth] = useState(
-    typeof window !== "undefined" ? Math.min(window.innerWidth, 1200) : 1200
+    typeof window !== "undefined" ? Math.floor(window.innerWidth * 0.85) : 1020
   );
 
   // ✅ Optimized Resize Handling with ResizeObserver
   useEffect(() => {
     const handleResize = () => {
-      const el = containerRef.current;
-      const w = el ? el.clientWidth : window.innerWidth;
+      const w = Math.floor(window.innerWidth * 0.85); // 85vw
       setContainerWidth(w);
     };
 
@@ -325,9 +327,9 @@ export default function Gallery() {
           </Button>
         </div>
 
-        {/* Grid */}
+        {/* Grid Container: full width, but child is 85vw */}
         <div className="w-full flex justify-center pb-12">
-          <div style={{ maxWidth: "90%", width: "100%" }}>
+          <div style={{ width: "85vw", maxWidth: "85vw" }}>
             {items.length === 0 ? (
               viewType === "photos" ? (
                 <div className="text-center py-20">
